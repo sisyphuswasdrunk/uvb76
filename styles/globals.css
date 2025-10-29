@@ -1,0 +1,30 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  margin: 0;
+  padding: 0;
+  background: black;
+}
+
+@keyframes delay-1000 {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.6; }
+}
+
+.delay-1000 {
+  animation: delay-1000 3s ease-in-out infinite;
+}
+
+.delay-300 {
+  animation-delay: 300ms;
+}
+
+.delay-600 {
+  animation-delay: 600ms;
+}
+
+.delay-900 {
+  animation-delay: 900ms;
+}
