@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { RotateCcw } from 'lucide-react';
 
 const UVB76Game = () => {
@@ -34,7 +34,7 @@ const UVB76Game = () => {
     }
   };
 
-  const handleAnswer = async (isReal) => {
+  const handleAnswer = useCallback(async (isReal) => {
     if (currentIndex >= phrases.length) return;
     
     const currentPhrase = phrases[currentIndex];
@@ -75,7 +75,24 @@ const UVB76Game = () => {
     } catch (error) {
       console.error('Ошибка проверки ответа:', error);
     }
-  };
+  }, [currentIndex, phrases]);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (showResult || gameOver || loading) return;
+      
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        handleAnswer(true);
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleAnswer(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showResult, gameOver, loading, handleAnswer]);
 
   const handleMouseDown = (e) => {
     setDragStart(e.clientX);
@@ -162,21 +179,21 @@ const UVB76Game = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex flex-col">
+    <div className="min-h-screen bg-gray-950 flex flex-col select-none touch-pan-y overscroll-none">
       {/* header */}
-      <div className="p-6 border-b border-gray-800">
+      <div className="p-4 sm:p-6 border-b border-gray-800">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold text-white">УВБ-76</h1>
-            <p className="text-sm text-gray-400">Реальная фраза или нейросеть?</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-white">УВБ-76</h1>
+            <p className="text-xs sm:text-sm text-gray-400">Реальная фраза или нейросеть?</p>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-4 sm:gap-6">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{percentage}%</div>
+              <div className="text-xl sm:text-2xl font-bold text-white">{percentage}%</div>
               <div className="text-xs text-gray-500">точность</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-400">{streak}</div>
+              <div className="text-xl sm:text-2xl font-bold text-yellow-400">{streak}</div>
               <div className="text-xs text-gray-500">серия</div>
             </div>
           </div>
@@ -184,16 +201,17 @@ const UVB76Game = () => {
       </div>
 
       {/* playground */}
-      <div className="flex-1 flex items-center justify-center p-4">
+      <div className="flex-1 flex items-center justify-center p-4 overflow-hidden">
         <div className="w-full max-w-2xl">
           <div className="relative h-96 perspective-1000">
             {currentPhrase && (
               <div
-                className="absolute inset-0 cursor-grab active:cursor-grabbing"
+                className="absolute inset-0 cursor-grab active:cursor-grabbing touch-none"
                 style={{
                   transform: `translateX(${dragOffset}px) rotate(${rotation}deg) scale(${1 - Math.abs(dragOffset) / 1000})`,
                   opacity: opacity,
-                  transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)'
+                  transition: isDragging ? 'none' : 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                  willChange: 'transform'
                 }}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -203,7 +221,7 @@ const UVB76Game = () => {
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleDragEnd}
               >
-                <div className="h-full bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl shadow-2xl flex items-center justify-center p-12 border border-gray-700 relative overflow-hidden">
+                <div className="h-full bg-gradient-to-br from-gray-800 to-gray-900 rounded-3xl shadow-2xl flex items-center justify-center p-6 sm:p-12 border border-gray-700 relative overflow-hidden">
                   {/* swipe-highlight */}
                   {dragOffset > 0 && (
                     <div 
@@ -218,18 +236,18 @@ const UVB76Game = () => {
                     ></div>
                   )}
 
-                  <div className="text-3xl font-mono text-white text-center leading-relaxed relative z-10">
+                  <div className="text-2xl sm:text-3xl font-mono text-white text-center leading-relaxed relative z-10">
                     {currentPhrase.text}
                   </div>
 
                   {/* indicators */}
                   {dragOffset > 80 && (
-                    <div className="absolute top-8 right-8 bg-green-500 text-white px-6 py-2 rounded-lg font-bold">
+                    <div className="absolute top-4 sm:top-8 right-4 sm:right-8 bg-green-500 text-white px-4 sm:px-6 py-2 rounded-lg font-bold text-sm sm:text-base">
                       УВБ-76
                     </div>
                   )}
                   {dragOffset < -80 && (
-                    <div className="absolute top-8 left-8 bg-red-500 text-white px-6 py-2 rounded-lg font-bold">
+                    <div className="absolute top-4 sm:top-8 left-4 sm:left-8 bg-red-500 text-white px-4 sm:px-6 py-2 rounded-lg font-bold text-sm sm:text-base">
                       НЕЙРОСЕТЬ
                     </div>
                   )}
@@ -255,9 +273,11 @@ const UVB76Game = () => {
           </div>
 
           {/* tip */}
-          <div className="text-center mt-8 text-gray-500 text-sm">
+          <div className="text-center mt-8 text-gray-500 text-xs sm:text-sm">
             <p className="mb-2">{currentIndex + 1} / {phrases.length}</p>
-            <p>← Свайп влево: Нейросеть | Свайп вправо: УВБ-76 →</p>
+            <p className="hidden sm:block">← Свайп влево: Нейросеть | Свайп вправо: УВБ-76 →</p>
+            <p className="hidden sm:block mt-1">Или используйте стрелки на клавиатуре</p>
+            <p className="sm:hidden">← Свайп влево: Нейросеть | Вправо: УВБ-76 →</p>
           </div>
         </div>
       </div>
